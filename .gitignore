@@ -1,0 +1,55 @@
+# ============================================
+# Root-level .gitignore for AgentHub Monorepo
+# ============================================
+
+# Common OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Common IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Environment variables (global)
+.env
+.env.local
+.env.*.local
+
+# Logs (global)
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Build artifacts (from CI/CD)
+dist/
+build/
+
+# Coverage reports (global)
+coverage/
+*.lcov
+.nyc_output
+htmlcov/
+.coverage
+.coverage.*
+
+# Docker volumes (if you have docker-compose at root)
+volumes/
+
+# Node modules (if you have root package.json)
+node_modules/
+
+# Python cache (if you have root Python files)
+__pycache__/
+*.py[cod]
+*$py.class
+../.venv/

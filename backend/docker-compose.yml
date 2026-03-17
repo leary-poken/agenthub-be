@@ -1,0 +1,121 @@
+services:
+
+  # PostgreSQL with pgvector
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: polyagent-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: polyagent
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data/pgdata
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d polyagent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis (for cache + Celery broker)
+  redis:
+    image: redis:7.2
+    container_name: polyagent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./volumes/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (PostgreSQL Administration)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: polyagent-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./volumes/pgadmin:/var/lib/pgadmin
+    depends_on:
+      - postgres
+
+  # MongoDB (for session storage)
+  mongodb:
+    image: mongo:7.0
+    container_name: polyagent-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: polyagent_sessions
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./volumes/mongodb:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Mongo Express (MongoDB Administration)
+  mongo-express:
+    image: mongo-express:1.0
+    container_name: polyagent-mongo-express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:admin123@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+
+  # Comment out the following services when developing locally
+  # Uncomment them for full docker deployment
+
+  # # FastAPI application
+  # app:
+  #   image: python:3.11-slim
+  #   container_name: polyagent-app
+  #   env_file: .env
+  #   working_dir: /app/src
+  #   volumes:
+  #     - .:/app
+  #     - /Users/oyejide/Downloads/questions:/app/data/questions
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #   command: bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libmagic1 libpq-dev gcc python3-dev poppler-utils tesseract-ocr libreoffice pandoc perl libterm-readline-gnu-perl poppler-data && pip install -e /app && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # # Celery worker (ready to connect to Redis + Postgres)
+  # celery:
+  #   image: python:3.11-slim
+  #   container_name: polyagent-celery
+  #   restart: always
+  #   env_file: .env
+  #   working_dir: /app/src
+  #   volumes:
+  #     - .:/app
+  #     - /Users/oyejide/Downloads/questions:/app/data/questions
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #   command: bash -c "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y libmagic1 libpq-dev gcc python3-dev poppler-utils tesseract-ocr libreoffice pandoc perl libterm-readline-gnu-perl poppler-data && pip install -e /app && celery -A app.workers.celery_app worker --loglevel=info"

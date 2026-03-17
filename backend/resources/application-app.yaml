@@ -1,0 +1,94 @@
+# Application Configuration
+# Core application settings and metadata
+
+name: "${APP_NAME:AgentHub}"
+version: "${APP_VERSION:1.0.0}"
+description: "Advanced LLM Library with Multi-Provider Support"
+debug: "${DEBUG:false}"             # Debug mode from environment variable
+environment: "${APP_ENV:development}" # Environment from env var
+
+# API Configuration
+api:
+  host: "${API_HOST:0.0.0.0}"
+  port: "${API_PORT:8000}"
+
+# Security Configuration
+security:
+  jwt_secret_key: "${JWT_SECRET_KEY:your-secret-key-change-in-production}"
+  jwt_algorithm: "${JWT_ALGORITHM:HS256}"
+  access_token_expire_minutes: "${ACCESS_TOKEN_EXPIRE_MINUTES:30}"
+  api_key_rotation_days: 90           # Rotate API keys every 90 days
+  session_token_ttl: 3600            # Session token lifetime (1 hour)
+  max_login_attempts: 5               # Maximum failed login attempts
+  lockout_duration: 900               # Account lockout duration (15 minutes)
+
+  # Logging Configuration
+  logging:
+    level: "${LOG_LEVEL:INFO}"
+
+# Agent configuration
+agent:
+  max_iterations: 10                  # Maximum agent iterations
+  timeout: 300                        # Agent execution timeout in seconds
+  memory_window: 20                   # Number of messages to keep in memory
+  tool_timeout: 60                    # Individual tool timeout in seconds
+
+  # Tool configuration
+  tools:
+    vector_store:
+      enabled: true
+      max_results: 4
+      similarity_threshold: 0.7
+
+    jira:
+      enabled: true
+      max_results: 10
+      timeout: 30
+
+# Session management
+session:
+  default_provider: "mongodb"         # Default session storage provider
+  max_history_length: 100             # Maximum messages per session
+  session_timeout: 3600               # Session timeout in seconds (1 hour)
+  cleanup_interval: 86400             # Cleanup interval in seconds (24 hours)
+
+  # Auto title generation (ChatGPT-style)
+  auto_title:
+    enabled: true                     # Enable automatic title generation
+    trigger_message_count: 3          # Generate title after N user messages
+    max_messages_for_context: 6       # Use first N messages for title generation
+    max_title_length: 50              # Maximum characters in generated title
+    min_title_words: 3                # Minimum words in title
+    max_title_words: 7                # Maximum words in title
+    temperature: 0.1                  # LLM temperature for title generation
+    default_title: "New Chat"         # Default title before auto-generation
+    fallback_title: "Untitled Conversation"  # Fallback if generation fails
+
+# Performance settings
+performance:
+  cache_ttl: 3600                     # Cache time-to-live in seconds (1 hour)
+  batch_processing_size: 100          # Default batch size for bulk operations
+  max_concurrent_requests: 10         # Maximum concurrent API requests
+  request_rate_limit: 100             # Requests per minute limit
+
+# Resilience configuration (retry and circuit breaker)
+resilience:
+  retry:
+    max_attempts: 3                   # Maximum retry attempts
+    base_delay: 1.0                   # Base delay in seconds
+    max_delay: 10.0                   # Maximum delay in seconds
+    strategy: "EXPONENTIAL"           # Retry strategy (EXPONENTIAL, LINEAR, FIXED)
+    jitter: true                      # Add randomness to retry delays
+
+  circuit_breaker:
+    failure_threshold: 5              # Number of failures before opening circuit
+    failure_window: 60.0              # Time window for counting failures (seconds)
+    recovery_timeout: 30.0            # Time to wait before attempting recovery (seconds)
+    success_threshold: 2              # Number of successes needed to close circuit
+
+# Logging configuration
+logging:
+  level: "INFO"                       # Default log level
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_file_size: "10MB"              # Maximum log file size
+  backup_count: 5                     # Number of backup log files
